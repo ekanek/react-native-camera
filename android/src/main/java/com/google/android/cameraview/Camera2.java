@@ -545,6 +545,16 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
     }
 
     @Override
+    void pauseRecording() {
+        Log.d("TESTING:","Pause Recording called");
+    }
+
+    @Override
+    void resumeRecording() {
+        Log.d("TESTING:","Resume Recording called");
+    }
+
+    @Override
     public void setFocusDepth(float value) {
         if (mFocusDepth == value) {
             return;

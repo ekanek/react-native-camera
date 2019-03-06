@@ -47,6 +47,8 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     private static final int FOCUS_METERING_AREA_WEIGHT_DEFAULT = 1000;
     private static final int DELAY_MILLIS_BEFORE_RESETTING_FOCUS = 3000;
 
+    private Handler mHandler = new Handler();
+
     private static final SparseArrayCompat<String> FLASH_MODES = new SparseArrayCompat<>();
 
     static {
@@ -172,6 +174,30 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
             }
         }
         releaseCamera();
+    }
+
+    // Added for pause and resume video
+    @Override
+    void pauseRecording() {
+        Log.d("PAUSE:", "Pause Recording method called");
+        if (mMediaRecorder != null){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                mIsRecording = false;
+                mMediaRecorder.pause();
+            }
+        }
+    }
+
+    // Added for pause and resume video
+    @Override
+    void resumeRecording() {
+        Log.d("RESUME:", "Resume recording method called");
+        if (mMediaRecorder != null){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                mIsRecording = true;
+                mMediaRecorder.resume();
+            }
+        }
     }
 
     // Suppresses Camera#setPreviewTexture
