@@ -40,6 +40,9 @@ public class CameraViewManager extends ViewGroupManager<RNCameraView> {
 
   private static final String REACT_CLASS = "RNCamera";
 
+  private float mFocusX = 0.0f;
+  private float mFocusY = 0.0f;
+
   @Override
   public void onDropViewInstance(RNCameraView view) {
     view.stop();
@@ -95,6 +98,18 @@ public class CameraViewManager extends ViewGroupManager<RNCameraView> {
   @ReactProp(name = "focusDepth")
   public void setFocusDepth(RNCameraView view, float depth) {
     view.setFocusDepth(depth);
+  }
+
+  @ReactProp(name = "focusPointX")
+  public void setFocusPointX(RNCameraView view, float x) {
+    mFocusX = x / 360;
+    view.setFocusArea(mFocusX, mFocusY);
+  }
+
+  @ReactProp(name = "focusPointY")
+  public void setFocusPointY(RNCameraView view, float y) {
+    mFocusY = y / 672;
+    view.setFocusArea(mFocusX, mFocusY);
   }
 
   @ReactProp(name = "zoom")

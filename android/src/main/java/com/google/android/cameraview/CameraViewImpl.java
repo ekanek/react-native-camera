@@ -78,6 +78,8 @@ abstract class CameraViewImpl {
 
     abstract void setExposureCompensation(int exposure);
 
+    abstract void setFocusArea(float x, float y);
+
     abstract int getExposureCompensation();
 
     abstract void takePicture(ReadableMap options);

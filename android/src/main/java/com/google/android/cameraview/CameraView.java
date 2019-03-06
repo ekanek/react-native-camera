@@ -32,6 +32,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.graphics.SurfaceTexture;
+import android.graphics.Rect;
+import android.hardware.Camera;
+import android.view.MotionEvent;
 
 import com.facebook.react.bridge.ReadableMap;
 
@@ -498,6 +501,10 @@ public class CameraView extends FrameLayout {
     }
 
     public float getFocusDepth() { return mImpl.getFocusDepth(); }
+
+    public void setFocusArea(float x, float y) {
+        mImpl.setFocusArea(x, y);
+    }
 
     public void setZoom(float zoom) {
       mImpl.setZoom(zoom);
