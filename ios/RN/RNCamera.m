@@ -300,6 +300,29 @@ static NSDictionary *defaultFaceDetectorOptions = nil;
     [device unlockForConfiguration];
 }
 
+- (void)updateExposure {
+    AVCaptureDevice *device = [[self videoCaptureDeviceInput] device];
+    NSError *error = nil;
+    CMTime t1 = AVCaptureExposureDurationCurrent;
+    NSLog(@"Brightness: %f",self.exposure);
+    NSLog(@"max exposure duration %d", device.activeFormat.maxExposureDuration);
+    if (![device lockForConfiguration:&error]) {
+        if (error) {
+            RCTLogError(@"%s: %@", __func__, error);
+        }
+        return;
+    }
+    NSLog(@"Current Exposure: %f", device.ISO);
+    if (self.exposure != -1) {
+        float minISO = device.activeFormat.minISO;
+        float maxISO = device.activeFormat.maxISO;
+        float clampedISO = self.exposure * (maxISO - minISO) + minISO;
+        [device setExposureModeCustomWithDuration: t1 ISO: clampedISO completionHandler:nil];
+    }
+    
+    [device unlockForConfiguration];
+}
+
 - (void)updateWhiteBalance
 {
     AVCaptureDevice *device = [self.videoCaptureDeviceInput device];
@@ -720,6 +743,7 @@ static NSDictionary *defaultFaceDetectorOptions = nil;
             [self updateFocusMode];
             [self updateFocusDepth];
             [self updateAutoFocusPointOfInterest];
+            [self updateExposure];
             [self updateWhiteBalance];
             [self.previewLayer.connection setVideoOrientation:orientation];
             [self _updateMetadataObjectsToRecognize];

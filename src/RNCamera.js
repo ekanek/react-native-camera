@@ -317,7 +317,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
     type: CameraManager.Type.back,
     autoFocus: CameraManager.AutoFocus.on,
     flashMode: CameraManager.FlashMode.off,
-    exposure: 0,
+    exposure: Platform.OS === 'ios' ? -1 : 0,
     focusPointX: 0,
     focusPointY: 0,
     whiteBalance: CameraManager.WhiteBalance.auto,

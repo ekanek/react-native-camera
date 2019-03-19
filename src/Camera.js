@@ -137,6 +137,7 @@ export default class Camera extends Component {
     defaultOnFocusComponent: PropTypes.bool,
     flashMode: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     zoom: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    exposure: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     keepAwake: PropTypes.bool,
     onBarCodeRead: PropTypes.func,
     barcodeScannerEnabled: PropTypes.bool,
@@ -170,6 +171,7 @@ export default class Camera extends Component {
     defaultOnFocusComponent: true,
     flashMode: CameraManager.FlashMode.off,
     zoom: 0,
+    exposure: Platform.OS === 'ios' ? -1 : 0;
     playSoundOnCapture: true,
     torchMode: CameraManager.TorchMode.off,
     mirrorImage: false,
@@ -422,6 +424,12 @@ export default class Camera extends Component {
     }
 
     return CameraManager.setZoom(zoom);
+  }
+
+  setExposure(exposure) {
+    if (Platform.OS === 'ios') {
+      return CameraManager.setExposure();
+    }
   }
 }
 
