@@ -139,6 +139,7 @@ type EventCallbackArgumentsType = {
 
 type PropsType = typeof View.props & {
   zoom?: number,
+  exposure?: number,
   ratio?: string,
   focusDepth?: number,
   type?: number | string,
@@ -149,7 +150,6 @@ type PropsType = typeof View.props & {
   onGoogleVisionBarcodesDetected?: Function,
   faceDetectionMode?: number,
   flashMode?: number | string,
-  exposure?: number,
   focusPointX?: number,
   focusPointY?: number,
   barCodeTypes?: Array<string>,
@@ -260,7 +260,6 @@ export default class Camera extends React.Component<PropsType, StateType> {
   static ConversionTables = {
     type: CameraManager.Type,
     flashMode: CameraManager.FlashMode,
-    exposure: CameraManager.Exposure,
     autoFocus: CameraManager.AutoFocus,
     whiteBalance: CameraManager.WhiteBalance,
     faceDetectionMode: (CameraManager.FaceDetection || {}).Mode,
@@ -273,6 +272,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
   static propTypes = {
     ...ViewPropTypes,
     zoom: PropTypes.number,
+    exposure: PropTypes.number,
     ratio: PropTypes.string,
     focusDepth: PropTypes.number,
     onMountError: PropTypes.func,
@@ -291,7 +291,6 @@ export default class Camera extends React.Component<PropsType, StateType> {
     googleVisionBarcodeMode: PropTypes.number,
     type: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     flashMode: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    exposure: PropTypes.number,
     focusPointX: PropTypes.number,
     focusPointY: PropTypes.number,
     whiteBalance: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -312,12 +311,12 @@ export default class Camera extends React.Component<PropsType, StateType> {
 
   static defaultProps: Object = {
     zoom: 0,
+    exposure: 0.5,
     ratio: '4:3',
     focusDepth: 0,
     type: CameraManager.Type.back,
     autoFocus: CameraManager.AutoFocus.on,
     flashMode: CameraManager.FlashMode.off,
-    exposure: Platform.OS === 'ios' ? -1 : 0,
     focusPointX: 0,
     focusPointY: 0,
     whiteBalance: CameraManager.WhiteBalance.auto,

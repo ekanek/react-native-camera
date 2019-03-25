@@ -79,6 +79,12 @@ function convertNativeProps(props) {
     }
   }
 
+  if (typeof props.exposure === 'string' || typeof props.exposure === 'number') {
+    if (props.exposure >= 0 && props.exposure <= 100) {
+      newProps.exposure = parseInt(props.exposure);
+    }
+  }
+
   if (typeof props.orientation === 'string') {
     newProps.orientation = Camera.constants.Orientation[props.orientation];
   }
@@ -124,6 +130,7 @@ export default class Camera extends Component {
     Orientation: CameraManager.Orientation,
     FlashMode: CameraManager.FlashMode,
     Zoom: CameraManager.Zoom,
+    Exposure: CameraManager.Exposure,
     TorchMode: CameraManager.TorchMode,
   };
 
@@ -145,6 +152,7 @@ export default class Camera extends Component {
     clearWindowBackground: PropTypes.bool,
     onFocusChanged: PropTypes.func,
     onZoomChanged: PropTypes.func,
+    onExposureChanged: PropTypes.func,
     mirrorImage: PropTypes.bool,
     mirrorVideo: PropTypes.bool,
     fixOrientation: PropTypes.bool,
@@ -171,7 +179,7 @@ export default class Camera extends Component {
     defaultOnFocusComponent: true,
     flashMode: CameraManager.FlashMode.off,
     zoom: 0,
-    exposure: Platform.OS === 'ios' ? -1 : 0;
+    exposure: 0,
     playSoundOnCapture: true,
     torchMode: CameraManager.TorchMode.off,
     mirrorImage: false,
@@ -218,6 +226,7 @@ export default class Camera extends Component {
     this._addOnBarCodeReadListener();
     this._addOnFocusChanged();
     this._addOnZoomChanged();
+    this._addOnExposureChanged();
 
     let { captureMode } = convertNativeProps({ captureMode: this.props.captureMode });
     let hasVideoAndAudio =
@@ -236,6 +245,7 @@ export default class Camera extends Component {
     this._removeOnBarCodeReadListener();
     this._removeOnFocusChanged();
     this._removeOnZoomChanged();
+    this._removeOnExposureChanged();
     if (this.state.isRecording) {
       this.stopCapture();
     }
@@ -243,7 +253,7 @@ export default class Camera extends Component {
 
   // eslint-disable-next-line
   componentWillReceiveProps(newProps) {
-    const { onBarCodeRead, onFocusChanged, onZoomChanged } = this.props;
+    const { onBarCodeRead, onFocusChanged, onZoomChanged, onExposureChanged } = this.props;
     if (onBarCodeRead !== newProps.onBarCodeRead) {
       this._addOnBarCodeReadListener(newProps);
     }
@@ -253,6 +263,10 @@ export default class Camera extends Component {
     if (onZoomChanged !== !newProps.onZoomChanged) {
       this._addOnZoomChanged(newProps);
     }
+    if (onExposureChanged !== !newProps.onExposureChanged) {
+      this._addOnExposureChanged(newProps);
+    }
+
   }
 
   _addOnBarCodeReadListener(props) {
@@ -279,6 +293,14 @@ export default class Camera extends Component {
       this.zoomListener = NativeAppEventEmitter.addListener('zoomChanged', onZoomChanged);
     }
   }
+
+  _addOnExposureChanged(props) {
+    if (Platform.OS === 'ios') {
+      const { onExposureChanged } = props || this.props;
+      this.exposureListener = NativeAppEventEmitter.addListener('exposureChanged', onExposureChanged);
+    }
+  }
+
   _removeOnBarCodeReadListener() {
     const listener = this.cameraBarCodeReadListener;
     if (listener) {
@@ -293,6 +315,13 @@ export default class Camera extends Component {
   }
   _removeOnZoomChanged() {
     const listener = this.zoomListener;
+    if (listener) {
+      listener.remove();
+    }
+  }
+
+  _removeOnExposureChanged() {
+    const listener = this.exposureListener;
     if (listener) {
       listener.remove();
     }
@@ -427,9 +456,17 @@ export default class Camera extends Component {
   }
 
   setExposure(exposure) {
-    if (Platform.OS === 'ios') {
-      return CameraManager.setExposure();
+    if (Platform.OS === 'android') {
+      const props = convertNativeProps(this.props);
+      return CameraManager.setExposure(
+        {
+          type: props.type,
+        },
+        exposure,
+      );
     }
+
+    return CameraManager.setExposure(exposure);
   }
 }
 

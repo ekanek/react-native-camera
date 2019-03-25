@@ -104,8 +104,6 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
 
     private int mFlash;
 
-    private int mExposure;
-
     private int mDisplayOrientation;
 
     private int mDeviceOrientation;
@@ -113,6 +111,8 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     private int mOrientation = Constants.ORIENTATION_AUTO;
 
     private float mZoom;
+
+    private float mExposure;
 
     private int mWhiteBalance;
 
@@ -365,22 +365,6 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     }
 
     @Override
-    int getExposureCompensation() {
-        return mExposure;
-    }
-
-    @Override
-    void setExposureCompensation(int exposure) {
-
-        if (exposure == mExposure) {
-            return;
-        }
-        if (setExposureInternal(exposure)) {
-            mCamera.setParameters(mCameraParameters);
-        }
-    }
-
-    @Override
     public void setFocusDepth(float value) {
         // not supported for Camera1
     }
@@ -403,6 +387,23 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     @Override
     float getZoom() {
         return mZoom;
+    }
+
+    @Override
+    float getExposureCompensation() {
+        return mExposure;
+    }
+
+    @Override
+    void setExposureCompensation(float exposure) {
+
+        // Log.e("CAMERA_1::", "Exposure Param :"+exposure);
+        if (exposure == mExposure) {
+            return;
+        }
+        if (setExposureInternal(exposure)) {
+            mCamera.setParameters(mCameraParameters);
+        }
     }
 
     @Override
@@ -696,9 +697,9 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
 
         setAutoFocusInternal(mAutoFocus);
         setFlashInternal(mFlash);
-        setExposureInternal(mExposure);
         setAspectRatio(mAspectRatio);
         setZoomInternal(mZoom);
+        setExposureInternal(mExposure);
         setWhiteBalanceInternal(mWhiteBalance);
         setScanningInternal(mIsScanning);
         mCamera.setParameters(mCameraParameters);
@@ -942,23 +943,6 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         }
     }
 
-    private boolean setExposureInternal(int exposure) {
-        Log.e("CAMERA_1::", ""+isCameraOpened()+"; Exposure: "+exposure);
-        if (isCameraOpened()){
-            mExposure = exposure;
-            int minExposure = mCameraParameters.getMinExposureCompensation();
-            int maxExposure = mCameraParameters.getMaxExposureCompensation();
-            Log.e("CAMERA_1::", ""+minExposure);
-            Log.e("CAMERA_1::", ""+maxExposure);
-
-            if (minExposure != maxExposure) {
-                mCameraParameters.setExposureCompensation(mExposure);
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     /**
      * @return {@code true} if {@link #mCameraParameters} was modified.
@@ -974,6 +958,27 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
             mZoom = zoom;
             return false;
         }
+    }
+
+    private boolean setExposureInternal(float exposure) {
+        // Log.e("CAMERA_1::", "Is Camera Opened :"+isCameraOpened()+"; Exposure Param : "+exposure);
+        mExposure = exposure;
+        if (isCameraOpened()){
+            int minExposure = mCameraParameters.getMinExposureCompensation();
+            int maxExposure = mCameraParameters.getMaxExposureCompensation();
+            Log.e("CAMERA_1::", "Minimum Exposure :"+minExposure);
+            Log.e("CAMERA_1::", "Maximum Exposure :"+maxExposure);
+
+            int displacement = maxExposure - minExposure;
+            int newExposure = (int) (displacement * exposure) -  maxExposure;
+            Log.e("CAMERA_1::","New Exposure :"+newExposure);
+
+            if (minExposure != maxExposure) {
+                mCameraParameters.setExposureCompensation(newExposure);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

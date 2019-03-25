@@ -35,6 +35,7 @@ import android.graphics.SurfaceTexture;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.view.MotionEvent;
+import android.util.Log;
 
 import com.facebook.react.bridge.ReadableMap;
 
@@ -223,9 +224,9 @@ public class CameraView extends FrameLayout {
         state.ratio = getAspectRatio();
         state.autoFocus = getAutoFocus();
         state.flash = getFlash();
-        state.exposure = getExposureCompensation();
         state.focusDepth = getFocusDepth();
         state.zoom = getZoom();
+        state.exposure = getExposureCompensation();
         state.whiteBalance = getWhiteBalance();
         state.scanning = getScanning();
         state.pictureSize = getPictureSize();
@@ -244,9 +245,9 @@ public class CameraView extends FrameLayout {
         setAspectRatio(ss.ratio);
         setAutoFocus(ss.autoFocus);
         setFlash(ss.flash);
-        setExposureCompensation(ss.exposure);
         setFocusDepth(ss.focusDepth);
         setZoom(ss.zoom);
+        setExposureCompensation(ss.exposure);
         setWhiteBalance(ss.whiteBalance);
         setScanning(ss.scanning);
         setPictureSize(ss.pictureSize);
@@ -411,7 +412,7 @@ public class CameraView extends FrameLayout {
     public AspectRatio getAspectRatio() {
         return mImpl.getAspectRatio();
     }
-    
+
     /**
      * Gets all the picture sizes for particular ratio supported by the current camera.
      *
@@ -420,7 +421,7 @@ public class CameraView extends FrameLayout {
     public SortedSet<Size> getAvailablePictureSizes(@NonNull AspectRatio ratio) {
         return mImpl.getAvailablePictureSizes(ratio);
     }
-    
+
     /**
      * Sets the size of taken pictures.
      *
@@ -429,7 +430,7 @@ public class CameraView extends FrameLayout {
     public void setPictureSize(@NonNull Size size) {
         mImpl.setPictureSize(size);
     }
-    
+
     /**
      * Gets the size of pictures that will be taken.
      */
@@ -478,14 +479,6 @@ public class CameraView extends FrameLayout {
         return mImpl.getFlash();
     }
 
-    public void setExposureCompensation(int exposure) {
-        mImpl.setExposureCompensation(exposure);
-    }
-
-    public int getExposureCompensation() {
-        return mImpl.getExposureCompensation();
-    }
-
 
     /**
      * Gets the camera orientation relative to the devices native orientation.
@@ -512,6 +505,15 @@ public class CameraView extends FrameLayout {
 
     public float getZoom() {
       return mImpl.getZoom();
+    }
+
+    public void setExposureCompensation(float exposure) {
+        // Log.e("CAMERA_1::", "Exposure Param"+exposure);
+        mImpl.setExposureCompensation(exposure);
+    }
+
+    public float getExposureCompensation() {
+        return mImpl.getExposureCompensation();
     }
 
     public void setWhiteBalance(int whiteBalance) {
@@ -651,11 +653,11 @@ public class CameraView extends FrameLayout {
         @Flash
         int flash;
 
-        int exposure;
-
         float focusDepth;
 
         float zoom;
+
+        float exposure;
 
         int whiteBalance;
 
@@ -670,9 +672,9 @@ public class CameraView extends FrameLayout {
             ratio = source.readParcelable(loader);
             autoFocus = source.readByte() != 0;
             flash = source.readInt();
-            exposure = source.readInt();
             focusDepth = source.readFloat();
             zoom = source.readFloat();
+            exposure = source.readFloat();
             whiteBalance = source.readInt();
             scanning = source.readByte() != 0;
             pictureSize = source.readParcelable(loader);
@@ -689,9 +691,9 @@ public class CameraView extends FrameLayout {
             out.writeParcelable(ratio, 0);
             out.writeByte((byte) (autoFocus ? 1 : 0));
             out.writeInt(flash);
-            out.writeInt(exposure);
             out.writeFloat(focusDepth);
             out.writeFloat(zoom);
+            out.writeFloat(exposure);
             out.writeInt(whiteBalance);
             out.writeByte((byte) (scanning ? 1 : 0));
             out.writeParcelable(pictureSize, flags);
