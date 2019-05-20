@@ -22,8 +22,18 @@ class BadInstagramCloneApp extends Component {
           style={styles.preview}
           type={RNCamera.Constants.Type.back}
           flashMode={RNCamera.Constants.FlashMode.on}
-          permissionDialogTitle={'Permission to use camera'}
-          permissionDialogMessage={'We need your permission to use your camera phone'}
+          androidCameraPermissionOptions={{
+            title: 'Permission to use camera',
+            message: 'We need your permission to use your camera',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
+          androidRecordAudioPermissionOptions={{
+            title: 'Permission to use audio recording',
+            message: 'We need your permission to use your audio',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
           onGoogleVisionBarcodesDetected={({ barcodes }) => {
             console.log(barcodes);
           }}
@@ -102,8 +112,18 @@ class App extends Component {
           style={styles.preview}
           type={RNCamera.Constants.Type.back}
           flashMode={RNCamera.Constants.FlashMode.on}
-          permissionDialogTitle={'Permission to use camera'}
-          permissionDialogMessage={'We need your permission to use your camera phone'}
+          androidCameraPermissionOptions={{
+            title: 'Permission to use camera',
+            message: 'We need your permission to use your camera',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
+          androidRecordAudioPermissionOptions={{
+            title: 'Permission to use audio recording',
+            message: 'We need your permission to use your audio',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
         >
           {({ camera, status, recordAudioPermissionStatus }) => {
             if (status !== 'READY') return <PendingView />;
@@ -179,13 +199,16 @@ Most cameras have a Auto Focus feature. It adjusts your camera lens position aut
 
 Use the `autoFocus` property to specify the auto focus setting of your camera. `RNCamera.Constants.AutoFocus.on` turns it ON, `RNCamera.Constants.AutoFocus.off` turns it OFF.
 
-#### `iOS` `autoFocusPointOfInterest`
+#### `autoFocusPointOfInterest`
 
 Values: Object `{ x: 0.5, y: 0.5 }`.
 
 Setting this property causes the auto focus feature of the camera to attempt to focus on the part of the image at this coordiate.
 
 Coordinates values are measured as floats from `0` to `1.0`. `{ x: 0, y: 0 }` will focus on the top left of the image, `{ x: 1, y: 1 }` will be the bottom right. Values are based on landscape mode with the home button on the right—this applies even if the device is in portrait mode.
+
+Hint:
+for portrait orientation, apply 90° clockwise rotation + translation: [Example](https://gist.github.com/Craigtut/6632a9ac7cfff55e74fb561862bc4edb)
 
 #### `captureAudio`
 
@@ -242,13 +265,21 @@ Value: float from `0` to `1.0`
 
 Specifies the zoom of your camera. The value 0 is no zoom, 1 is maximum zoom. For a medium zoom, for example, you could pass `0.5`.
 
-#### `Android` `permissionDialogTitle`
+#### `Android` `permissionDialogTitle` - Deprecated
 
 Starting on android M individual permissions must be granted for certain services, the camera is one of them, you can use this to change the title of the dialog prompt requesting permissions.
 
-#### `Android` `permissionDialogMessage`
+#### `Android` `permissionDialogMessage` - Deprecated
 
 Starting on android M individual permissions must be granted for certain services, the camera is one of them, you can use this to change the content of the dialog prompt requesting permissions.
+
+#### `Android` `androidRecordAudioPermissionOptions`
+
+Configuration options for permissions request for recording audio. It will be passed as `rationale` parameter to [`PermissionsAndroid.request`](https://facebook.github.io/react-native/docs/permissionsandroid#request). This replaces and deprecates old `permissionDialogTitle` and `permissionDialogMessage` parameters.
+
+#### `Android` `androidCameraPermissionOptions`
+
+Configuration options for permissions request for camera. It will be passed as `rationale` parameter to [`PermissionsAndroid.request`](https://facebook.github.io/react-native/docs/permissionsandroid#request). This replaces and deprecates old `permissionDialogTitle` and `permissionDialogMessage` parameters.
 
 #### `notAuthorizedView`
 
@@ -378,14 +409,29 @@ The following barcode types can be recognised:
 An array of barcode types to search for. Defaults to all types listed above. No effect if `onBarCodeRead` is undefined.
 Example: `<RNCamera barCodeTypes={[RNCamera.Constants.BarCodeType.qr]} />`
 
-#### `Android` `onGoogleVisionBarcodesDetected`
+#### `onGoogleVisionBarcodesDetected`
 
-Like `onBarCodeRead`, but we will use Google Play Service Vision to scan barcodes, which is pretty fast on Android. Note: If you already set `onBarCodeRead`, this will be invalid.
+Like `onBarCodeRead`, but using Firebase MLKit to scan barcodes. More info can be found [here](https://firebase.google.com/docs/ml-kit/read-barcodes) Note: If you already set `onBarCodeRead`, this will be invalid.
 
-#### `Android` `googleVisionBarcodeType`
+#### `googleVisionBarcodeType`
 
-Like `barCodeTypes`, but applies to the Google Play Service Vision barcode detector.
+Like `barCodeTypes`, but applies to the Firebase MLKit barcode detector.
 Example: `<RNCamera googleVisionBarcodeType={RNCamera.Constants.GoogleVisionBarcodeDetection.BarcodeType.DATA_MATRIX} />`
+Available settings:
+- CODE_128
+- CODE_39
+- CODE_93
+- CODABAR
+- EAN_13
+- EAN_8
+- ITF
+- UPC_A
+- UPC_E
+- QR_CODE
+- PDF417
+- AZTEC
+- DATA_MATRIX
+- ALL
 
 #### `Android` `googleVisionBarcodeMode`
 
@@ -394,11 +440,11 @@ Example: `<RNCamera googleVisionBarcodeMode={RNCamera.Constants.GoogleVisionBarc
 
 ### Face Detection Related props
 
-RNCamera uses the Google Mobile Vision frameworks for Face Detection, you can read more info about it [here](https://developers.google.com/android/reference/com/google/android/gms/vision/face/FaceDetector).
+RNCamera uses the Firebase MLKit for Face Detection, you can read more about it [here](https://firebase.google.com/docs/ml-kit/detect-faces).
 
 #### `onFacesDetected`
 
-Method to be called when face is detected. Receives a Faces Detected Event object. The interesting value of this object is the `faces` value, which is an array with objects of the [Face](https://developers.google.com/android/reference/com/google/android/gms/vision/face/Face) properties.
+Method to be called when face is detected. Receives a Faces Detected Event object. The interesting value of this object is the `faces` value, which is an array of Face objects. You can find more details about the possible values of these objects [here](https://firebase.google.com/docs/ml-kit/face-detection-concepts)
 
 #### `onFaceDetectionError`
 
@@ -426,11 +472,11 @@ Classification is determining whether a certain facial characteristic is present
 
 ### Text Recognition Related props
 
-RNCamera uses the Google Mobile Vision frameworks for Text Recognition, you can read more info about it [here](https://developers.google.com/vision/android/text-overview).
+RNCamera uses the Firebase MLKit for Text Recognition, you can read more info about it [here](https://firebase.google.com/docs/ml-kit/recognize-text).
 
 #### `onTextRecognized`
 
-Method to be called when text is detected. Receives a Text Recognized Event object. The interesting value of this object is the `textBlocks` value, which is an array with objects of the [TextBlock](https://developers.google.com/android/reference/com/google/android/gms/vision/text/TextBlock) properties.
+Method to be called when text is detected. Receives a Text Recognized Event object. The interesting value of this object is the `textBlocks` value, which is an array of TextBlock objects.
 
 ## Component instance methods
 
@@ -499,7 +545,8 @@ Supported options:
     - `ios` Specifies capture settings suitable for CIF quality (352x288 pixel) video output.
     - `android` Not supported.
 
-- `videoBitrate`. (int greater than 0) This option specifies a desired video bitrate.  For example, 5\*1000\*1000 would be 5Mbps.
+- `videoBitrate`. (int greater than 0) This option specifies a desired video bitrate. For example, 5\*1000\*1000 would be 5Mbps.
+
   - `ios` Not supported.
   - `android` Supported.
 
@@ -537,6 +584,13 @@ The promise will be fulfilled with an object with some of the following properti
 
 - `iOS` `codec`: the codec of the recorded video. One of `RNCamera.Constants.VideoCodec`
 
+- `isRecordingInterrupted`: (boolean) whether the app has been minimized while recording
+
+#### `refreshAuthorizationStatus: Promise<void>`
+
+Allows to make RNCamera check Permissions again and set status accordingly.  
+Making it possible to refresh status of RNCamera after user initially rejected the permissions.
+
 #### `stopRecording: void`
 
 Should be called after recordAsync() to make the promise be fulfilled and get the video uri.
@@ -561,14 +615,22 @@ iOS only. Returns a promise. The promise will be fulfilled with a boolean indica
 
 This component supports subviews, so if you wish to use the camera view as a background or if you want to layout buttons/images/etc. inside the camera then you can do that.
 
+**Example subview:**
+
+### react-native-barcode-mask
+
+A Barcode and QR code UI mask which can be use to render a scanning layout on camera with customizable styling.
+
+Read more about [react-native-barcode-mask](https://github.com/shahnawaz/react-native-barcode-mask) here.
+
 ## Testing
 
 To learn about how to test components which uses `RNCamera` check its [documentation about testing](./tests.md).
 
-## Example
+## Examples
 
 To see more of the `RNCamera` in action you can check out the [RNCamera examples directory](https://github.com/react-native-community/react-native-camera/tree/master/examples).
-
+Firebase MLKit-base features (such as Text, Face and Barcode detection) can be found in the [mlkit](https://github.com/react-native-community/react-native-camera/tree/master/examples/mlkit) example.
 
 ## Open Collective
 

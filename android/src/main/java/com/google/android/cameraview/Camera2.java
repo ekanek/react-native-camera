@@ -238,6 +238,8 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
 
     private int mFlash;
 
+    private int mExposure;
+
     private int mCameraOrientation;
 
     private int mDisplayOrientation;
@@ -476,6 +478,17 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
     @Override
     int getFlash() {
         return mFlash;
+    }
+
+
+    @Override
+    int getExposureCompensation() {
+        return mExposure;
+    }
+
+    @Override
+    void setExposureCompensation(int exposure) {
+        Log.e("CAMERA_2:: ", "Adjusting exposure is not currently supported for Camera2");
     }
 
 
@@ -1054,6 +1067,87 @@ class Camera2 extends CameraViewImpl implements MediaRecorder.OnInfoListener, Me
         } catch (CameraAccessException e) {
             Log.e(TAG, "Failed to lock focus.", e);
         }
+    }
+
+
+    /**
+     * Auto focus on input coordinates
+     */
+
+    // Much credit - https://gist.github.com/royshil/8c760c2485257c85a11cafd958548482
+    void setFocusArea(float x, float y) {
+        CameraCaptureSession.CaptureCallback captureCallbackHandler = new CameraCaptureSession.CaptureCallback() {
+            @Override
+            public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
+                super.onCaptureCompleted(session, request, result);
+
+                if (request.getTag() == "FOCUS_TAG") {
+                    mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, null);
+                    try {
+                        mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), null, null);
+                    } catch (CameraAccessException e) {
+                        Log.e(TAG, "Failed to manual focus.", e);
+                    }
+                }
+            }
+
+            @Override
+            public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
+                super.onCaptureFailed(session, request, failure);
+                Log.e(TAG, "Manual AF failure: " + failure);
+            }
+        };
+
+        try {
+            mCaptureSession.stopRepeating();
+
+        } catch (CameraAccessException e) {
+            Log.e(TAG, "Failed to manual focus.", e);
+        }
+
+        mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
+        mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
+        try {
+            mCaptureSession.capture(mPreviewRequestBuilder.build(), captureCallbackHandler, null);
+        } catch (CameraAccessException e) {
+            Log.e(TAG, "Failed to manual focus.", e);
+        }
+
+        if (isMeteringAreaAFSupported()) {
+            MeteringRectangle focusAreaTouch = calculateFocusArea(x, y);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, new MeteringRectangle[]{focusAreaTouch});
+        }
+        mPreviewRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+        mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+        mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
+        mPreviewRequestBuilder.setTag("FOCUS_TAG");
+
+        try {
+            mCaptureSession.capture(mPreviewRequestBuilder.build(), captureCallbackHandler, null);
+        } catch (CameraAccessException e) {
+            Log.e(TAG, "Failed to manual focus.", e);
+        }
+    }
+
+    private boolean isMeteringAreaAFSupported() {
+        return mCameraCharacteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF) >= 1;
+    }
+
+    private MeteringRectangle calculateFocusArea(float x, float y) {
+        final Rect sensorArraySize = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+
+        // Current iOS spec has a requirement on sensor orientation that doesn't change, spec followed here.
+        final int xCoordinate = (int)(y  * (float)sensorArraySize.height());
+        final int yCoordinate = (int)(x * (float)sensorArraySize.width());
+        final int halfTouchWidth  = 150;  //TODO: this doesn't represent actual touch size in pixel. Values range in [3, 10]...
+        final int halfTouchHeight = 150;
+        MeteringRectangle focusAreaTouch = new MeteringRectangle(Math.max(yCoordinate - halfTouchWidth,  0),
+                                                                Math.max(xCoordinate - halfTouchHeight, 0),
+                                                                halfTouchWidth  * 2,
+                                                                halfTouchHeight * 2,
+                                                                MeteringRectangle.METERING_WEIGHT_MAX - 1);
+
+        return focusAreaTouch;
     }
 
     /**

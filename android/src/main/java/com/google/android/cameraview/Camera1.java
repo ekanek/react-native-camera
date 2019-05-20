@@ -17,11 +17,13 @@
 package com.google.android.cameraview;
 
 import android.annotation.SuppressLint;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Handler;
 import android.support.v4.util.SparseArrayCompat;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -32,6 +34,7 @@ import com.facebook.react.bridge.ReadableMap;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -69,6 +72,12 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
       WB_MODES.put(Constants.WB_FLUORESCENT, Camera.Parameters.WHITE_BALANCE_FLUORESCENT);
       WB_MODES.put(Constants.WB_INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
     }
+
+    private static final int FOCUS_AREA_SIZE_DEFAULT = 300;
+    private static final int FOCUS_METERING_AREA_WEIGHT_DEFAULT = 1000;
+    private static final int DELAY_MILLIS_BEFORE_RESETTING_FOCUS = 3000;
+
+    private Handler mHandler = new Handler();
 
     private int mCameraId;
 
@@ -364,6 +373,25 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         return mFlash;
     }
 
+    /*
+     * FIXME: Use the int versions of the following methods
+    @Override
+    int getExposureCompensation() {
+        return mExposure;
+    }
+
+    @Override
+    void setExposureCompensation(int exposure) {
+
+        if (exposure == mExposure) {
+            return;
+        }
+        if (setExposureInternal(exposure)) {
+            mCamera.setParameters(mCameraParameters);
+        }
+    }
+    */
+
     @Override
     public void setFocusDepth(float value) {
         // not supported for Camera1
@@ -580,7 +608,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
             return;
         }
         mDeviceOrientation = deviceOrientation;
-        if (isCameraOpened() && mOrientation == Constants.ORIENTATION_AUTO) {
+        if (isCameraOpened() && mOrientation == Constants.ORIENTATION_AUTO && !mIsRecording) {
             mCameraParameters.setRotation(calcCameraRotation(deviceOrientation));
             mCamera.setParameters(mCameraParameters);
          }
@@ -680,9 +708,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         Size size = chooseOptimalSize(sizes);
 
         // Always re-apply camera parameters
-        if (mPictureSize == null) {
-            mPictureSize = mPictureSizes.sizes(mAspectRatio).last();
-        }
+        mPictureSize = mPictureSizes.sizes(mAspectRatio).last();
         if (mShowingPreview) {
             mCamera.stopPreview();
             mIsPreviewActive = false;
@@ -745,17 +771,13 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
     }
 
     // Most credit: https://github.com/CameraKit/camerakit-android/blob/master/camerakit-core/src/main/api16/com/wonderkiln/camerakit/Camera1.java
-    public void setFocusArea(float x, float y) {
-        Log.d("TESTING:", Float.toString(x));
-        Log.d("TESTING:", Float.toString(y));
-
+    void setFocusArea(float x, float y) {
         if (mCamera != null) {
             Camera.Parameters parameters = mCamera.getParameters();
             if (parameters == null) return;
 
             String focusMode = parameters.getFocusMode();
             Rect rect = calculateFocusArea(x, y);
-            Log.d("TESTING:", rect.toString());
 
             List<Camera.Area> meteringAreas = new ArrayList<>();
             meteringAreas.add(new Camera.Area(rect, FOCUS_METERING_AREA_WEIGHT_DEFAULT));
@@ -764,7 +786,7 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
                             focusMode.equals(Camera.Parameters.FOCUS_MODE_MACRO) ||
                             focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) ||
                             focusMode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
-            ) {
+                    ) {
                 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
                 parameters.setFocusAreas(meteringAreas);
                 if (parameters.getMaxNumMeteringAreas() > 0) {
@@ -926,13 +948,16 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         if (isCameraOpened()) {
             List<String> modes = mCameraParameters.getSupportedFlashModes();
             String mode = FLASH_MODES.get(flash);
-            if (modes != null && modes.contains(mode)) {
+            if(modes == null) {
+                return false;
+            }
+            if (modes.contains(mode)) {
                 mCameraParameters.setFlashMode(mode);
                 mFlash = flash;
                 return true;
             }
             String currentMode = FLASH_MODES.get(mFlash);
-            if (modes == null || !modes.contains(currentMode)) {
+            if (!modes.contains(currentMode)) {
                 mCameraParameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
                 return true;
             }
@@ -943,6 +968,25 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
         }
     }
 
+    // FIXME: Use int for exposure
+    /*
+    private boolean setExposureInternal(int exposure) {
+        Log.e("CAMERA_1::", ""+isCameraOpened()+"; Exposure: "+exposure);
+        if (isCameraOpened()){
+            mExposure = exposure;
+            int minExposure = mCameraParameters.getMinExposureCompensation();
+            int maxExposure = mCameraParameters.getMaxExposureCompensation();
+            Log.e("CAMERA_1::", ""+minExposure);
+            Log.e("CAMERA_1::", ""+maxExposure);
+
+            if (minExposure != maxExposure) {
+                mCameraParameters.setExposureCompensation(mExposure);
+                return true;
+            }
+        }
+        return false;
+    }
+    */
 
     /**
      * @return {@code true} if {@link #mCameraParameters} was modified.
