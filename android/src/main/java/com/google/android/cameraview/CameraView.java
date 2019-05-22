@@ -716,7 +716,7 @@ public class CameraView extends FrameLayout {
             out.writeParcelable(ratio, 0);
             out.writeByte((byte) (autoFocus ? 1 : 0));
             out.writeInt(flash);
-            out.writeInt(exposure);
+            out.writeFloat(exposure);
             out.writeFloat(focusDepth);
             out.writeFloat(zoom);
             out.writeFloat(exposure);

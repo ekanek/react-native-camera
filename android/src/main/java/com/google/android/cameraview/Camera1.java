@@ -73,10 +73,6 @@ class Camera1 extends CameraViewImpl implements MediaRecorder.OnInfoListener,
       WB_MODES.put(Constants.WB_INCANDESCENT, Camera.Parameters.WHITE_BALANCE_INCANDESCENT);
     }
 
-    private static final int FOCUS_AREA_SIZE_DEFAULT = 300;
-    private static final int FOCUS_METERING_AREA_WEIGHT_DEFAULT = 1000;
-    private static final int DELAY_MILLIS_BEFORE_RESETTING_FOCUS = 3000;
-
     private Handler mHandler = new Handler();
 
     private int mCameraId;

@@ -80,7 +80,7 @@ abstract class CameraViewImpl {
 
     abstract void setExposureCompensation(float exposure);
 
-    abstract int getExposureCompensation();
+    abstract float getExposureCompensation();
 
     abstract void takePicture(ReadableMap options);
 
@@ -99,8 +99,6 @@ abstract class CameraViewImpl {
 
     abstract void setDeviceOrientation(int deviceOrientation);
     
-    abstract void setFocusArea(float x, float y);
-
     abstract void setFocusDepth(float value);
 
     abstract float getFocusDepth();
@@ -108,10 +106,6 @@ abstract class CameraViewImpl {
     abstract void setZoom(float zoom);
 
     abstract float getZoom();
-
-    abstract void setExposureCompensation(float exposure);
-
-    abstract float getExposureCompensation();
 
     abstract void setWhiteBalance(int whiteBalance);
 
