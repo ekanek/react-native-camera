@@ -445,11 +445,7 @@ export default class Camera extends React.Component<PropsType, StateType> {
         <Text style={styles.notAuthorizedText}>Camera not authorized</Text>
       </View>
     ),
-    pendingAuthorizationView: (
-      <View style={styles.authorizationContainer}>
-        <ActivityIndicator size="small" />
-      </View>
-    ),
+    pendingAuthorizationView: <View style={styles.authorizationContainer} />,
     captureAudio: true,
     useCamera2Api: false,
     playSoundOnCapture: false,
@@ -571,11 +567,11 @@ export default class Camera extends React.Component<PropsType, StateType> {
   }
 
   pauseRecording() {
-      CameraManager.pauseRecording(this._cameraHandle);
-    }
+    CameraManager.pauseRecording(this._cameraHandle);
+  }
 
   resumeRecording() {
-      CameraManager.resumeRecording(this._cameraHandle);
+    CameraManager.resumeRecording(this._cameraHandle);
   }
 
   pausePreview() {
@@ -770,7 +766,9 @@ export default class Camera extends React.Component<PropsType, StateType> {
         </View>
       );
     } else if (!this.state.isAuthorizationChecked) {
-      return this.props.pendingAuthorizationView;
+      return (
+        <View style={{ flex: 1, backgroundColor: 'transparent' }}>{this.renderChildren()}</View>
+      );
     } else {
       return this.props.notAuthorizedView;
     }
